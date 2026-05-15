@@ -1,11 +1,10 @@
 /*
   GROUP_X - Student Assistant Application
   Members:
-  - Name Surname (Student Number)
-  - Name Surname (Student Number)
-  - Name Surname (Student Number)
-  - Name Surname (Student Number)
-  - Name Surname (Student Number)
+  - S.Rululu (222057369)
+  - k.Malikoe (224004891)
+  - T.Maqala (219004340)
+  - R.Molelekwa (222015201)
   Date: May 2026
   Module: TPG316C
 */
