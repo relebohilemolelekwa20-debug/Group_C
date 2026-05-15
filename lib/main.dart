@@ -36,40 +36,11 @@ void main() async {
   );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  bool _initialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _init();
-  }
-
-  Future<void> _init() async {
-    final auth = context.read<AuthViewModel>();
-    await auth.initUser();
-    setState(() {
-      _initialized = true;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (!_initialized) {
-      return const MaterialApp(
-        home: Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
-      );
-    }
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Student Assistant',

@@ -65,6 +65,7 @@ class _HomeViewState extends State<HomeView> {
   Widget build(BuildContext context) {
     final authVM = context.watch<AuthViewModel>();
     final isAdmin = authVM.userRole == 'admin';
+  
     
     // If admin, show Admin Dashboard
     if (isAdmin) {

@@ -5,7 +5,6 @@
   - k.Malikoe (224004891)
   - T.Maqala (219004340)
   - R.Molelekwa (222015201)
-  - Name Surname (Student Number)
   Date: May 2026
   Module: TPG316C
 */
@@ -18,11 +17,11 @@ class AuthViewModel extends ChangeNotifier {
   
   bool _isLoading = false;
   String? _errorMessage;
-  String? _userRole;
+  String _userRole = 'student'; // Default value, never null
   
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  String? get userRole => _userRole;
+  String get userRole => _userRole; // Returns String, never null
   
   bool get isLoggedIn => _supabase.auth.currentSession != null;
   String? get currentUserId => _supabase.auth.currentUser?.id;
@@ -30,16 +29,23 @@ class AuthViewModel extends ChangeNotifier {
   
   // Initialize user session and fetch role
   Future<void> initUser() async {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn) {
+      _userRole = 'student';
+      //notifyListeners();
+      return;
+    }
     await fetchUserRole();
-    notifyListeners();
+    //notifyListeners();
   }
   
   // Fetch user role from profiles table
   Future<void> fetchUserRole() async {
     try {
       final userId = currentUserId;
-      if (userId == null) return;
+      if (userId == null) {
+        _userRole = 'student';
+        return;
+      }
       
       final response = await _supabase
           .from('profiles')
@@ -47,10 +53,9 @@ class AuthViewModel extends ChangeNotifier {
           .eq('id', userId)
           .maybeSingle();
       
-      if (response != null) {
-        _userRole = response['role'] ?? 'student';
+      if (response != null && response['role'] != null) {
+        _userRole = response['role'];
       } else {
-        // Default role if not set
         _userRole = 'student';
       }
     } catch (e) {
@@ -66,7 +71,6 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
     
     try {
-      // Create user in Supabase Auth
       final response = await _supabase.auth.signUp(
         email: email.trim(),
         password: password,
@@ -74,20 +78,13 @@ class AuthViewModel extends ChangeNotifier {
       );
       
       if (response.user != null) {
-        // Create profile entry (default role is 'student')
-        await _supabase.from('profiles').insert({
-          'id': response.user!.id,
-          'full_name': name,
-          'email': email.trim(),
-          'role': 'student',
-          'created_at': DateTime.now().toIso8601String(),
-        });
-        
         _userRole = 'student';
         _errorMessage = null;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created! Please login.')),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account created! Please login.')),
+          );
+        }
       }
     } catch (e) {
       _errorMessage = e.toString();
@@ -124,7 +121,7 @@ class AuthViewModel extends ChangeNotifier {
   // Logout
   Future<void> logout() async {
     await _supabase.auth.signOut();
-    _userRole = null;
+    _userRole = 'student';
     notifyListeners();
   }
   
