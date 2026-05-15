@@ -18,7 +18,14 @@ import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/application_viewmodel.dart';
 
 class ApplicationFormView extends StatefulWidget {
-  const ApplicationFormView({super.key});
+  final bool isEditing;
+  final Map<String, dynamic>? application;
+  
+  const ApplicationFormView({
+    super.key,
+    this.isEditing = false,
+    this.application,
+  });
 
   @override
   State<ApplicationFormView> createState() => _ApplicationFormViewState();
@@ -58,6 +65,28 @@ class _ApplicationFormViewState extends State<ApplicationFormView> {
     'TPG314C - Software Engineering',
     'TPG315C - Operating Systems',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // If editing, fill the controllers with existing data
+    if (widget.isEditing && widget.application != null) {
+      final app = widget.application!;
+      _yearOfStudyController.text = app['year_of_study'] ?? '';
+      _module1LevelController.text = app['module1_level'] ?? '';
+      _module1NameController.text = app['module1_name'] ?? '';
+      _module2LevelController.text = app['module2_level'] ?? '';
+      _module2NameController.text = app['module2_name'] ?? '';
+      _motivationController.text = app['motivation'] ?? '';
+      _includeModule2 = (app['module2_name'] != null && app['module2_name'].toString().isNotEmpty);
+      
+      // If editing, document is already uploaded
+      if (app['document_url'] != null) {
+        _uploadedDocumentUrl = app['document_url'];
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -105,6 +134,39 @@ class _ApplicationFormViewState extends State<ApplicationFormView> {
     final authVM = context.read<AuthViewModel>();
     final appVM = context.read<ApplicationViewModel>();
     
+    // IF EDITING MODE - Update existing application
+    if (widget.isEditing) {
+      final success = await appVM.updateApplication(
+        applicationId: widget.application!['id'],
+        yearOfStudy: _yearOfStudyController.text,
+        module1Level: _module1LevelController.text,
+        module1Name: _module1NameController.text,
+        module2Level: _includeModule2 ? _module2LevelController.text : null,
+        module2Name: _includeModule2 ? _module2NameController.text : null,
+        motivation: _motivationController.text,
+        documentUrl: _uploadedDocumentUrl,
+      );
+      
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Application updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${appVM.errorMessage}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+    
+    // CREATE MODE - Submit new application
     // Check if student already has an application
     final hasExisting = await appVM.hasExistingApplication(authVM.currentUserId!);
     if (hasExisting) {
@@ -135,7 +197,7 @@ class _ApplicationFormViewState extends State<ApplicationFormView> {
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pop(context, true); // Return to home to refresh
+      Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -152,7 +214,7 @@ class _ApplicationFormViewState extends State<ApplicationFormView> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Student Assistant Application'),
+        title: Text(widget.isEditing ? 'Edit Application' : 'Student Assistant Application'),
         centerTitle: true,
         elevation: 0,
       ),
@@ -166,24 +228,24 @@ class _ApplicationFormViewState extends State<ApplicationFormView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header
-                  const Card(
+                  Card(
                     color: Colors.blue,
                     child: Padding(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          Icon(Icons.assignment, size: 48, color: Colors.white),
-                          SizedBox(height: 8),
+                          const Icon(Icons.assignment, size: 48, color: Colors.white),
+                          const SizedBox(height: 8),
                           Text(
-                            'Student Assistant Application',
-                            style: TextStyle(
+                            widget.isEditing ? 'Edit Your Application' : 'Student Assistant Application',
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                           ),
-                          SizedBox(height: 4),
-                          Text(
+                          const SizedBox(height: 4),
+                          const Text(
                             'Apply to become a Student Assistant',
                             style: TextStyle(color: Colors.white70),
                           ),
@@ -421,7 +483,7 @@ class _ApplicationFormViewState extends State<ApplicationFormView> {
                             if (_isUploading)
                               const LinearProgressIndicator(),
                           ],
-                          if (_selectedDocument == null)
+                          if (_selectedDocument == null && _uploadedDocumentUrl == null)
                             ElevatedButton.icon(
                               onPressed: _pickDocument,
                               icon: const Icon(Icons.upload_file),
@@ -429,6 +491,14 @@ class _ApplicationFormViewState extends State<ApplicationFormView> {
                               style: ElevatedButton.styleFrom(
                                 minimumSize: const Size(double.infinity, 45),
                               ),
+                            ),
+                          if (_uploadedDocumentUrl != null && _selectedDocument == null)
+                            const Row(
+                              children: [
+                                Icon(Icons.check_circle, color: Colors.green),
+                                SizedBox(width: 8),
+                                Text('Document already uploaded'),
+                              ],
                             ),
                           const SizedBox(height: 8),
                           const Text(
@@ -457,9 +527,9 @@ class _ApplicationFormViewState extends State<ApplicationFormView> {
                       ),
                       child: appVM.isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              'SUBMIT APPLICATION',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          : Text(
+                              widget.isEditing ? 'UPDATE APPLICATION' : 'SUBMIT APPLICATION',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                     ),
                   ),
