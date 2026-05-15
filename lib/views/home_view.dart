@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/application_viewmodel.dart';
-import 'application_form_view.dart';
+import '../routes/route_manager.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -42,20 +42,18 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 
+  // UPDATED: Using RouteManager for navigation
   void _navigateToSubmitApplication() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ApplicationFormView()),
-    ).then((_) => _loadApplications());
+    RouteManager.pushNamed(context, RouteManager.applicationForm);
   }
 
+  // UPDATED: Using RouteManager with arguments
   void _navigateToApplicationDetail(Map<String, dynamic> application) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ApplicationDetailView(application: application),
-      ),
-    ).then((_) => _loadApplications());
+    RouteManager.pushNamed(
+      context, 
+      RouteManager.applicationDetail,
+      arguments: application,
+    );
   }
 
   void _logout() async {
@@ -296,5 +294,3 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 }
-
-
