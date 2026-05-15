@@ -5,7 +5,6 @@
   - k.Malikoe (224004891)
   - T.Maqala (219004340)
   - R.Molelekwa (222015201)
-  - Name Surname (Student Number)
   Date: May 2026
   Module: TPG316C
 */
@@ -14,6 +13,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/application_viewmodel.dart';
 
@@ -56,14 +56,14 @@ class _ApplicationFormViewState extends State<ApplicationFormView> {
   // Module level options
   final List<String> _levelOptions = ['First Year', 'Second Year', 'Third Year'];
   
-  // Module name options
+  // Module name options 
   final List<String> _moduleOptions = [
-    'TPG316C - Mobile App Development',
-    'TPG311C - Web Development',
-    'TPG312C - Databases',
-    'TPG313C - Networking',
-    'TPG314C - Software Engineering',
-    'TPG315C - Operating Systems',
+    'SOD316C - Mobile App Development',
+    'WEB316C - Web Development',
+    'DBS316C - Databases',
+    'CMN316C - Networking',
+    'SOE316C - Software Engineering',
+    'TPG316C - Operating Systems',
   ];
 
   @override
@@ -114,17 +114,39 @@ class _ApplicationFormViewState extends State<ApplicationFormView> {
         _isUploading = true;
       });
       
-      // Simulate upload (will connect to Supabase later)
-      await Future.delayed(const Duration(seconds: 1));
-      
-      setState(() {
-        _uploadedDocumentUrl = 'uploaded_document_url_placeholder';
-        _isUploading = false;
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Document uploaded successfully!')),
-      );
+      try {
+        final supabase = Supabase.instance.client;
+        final userId = context.read<AuthViewModel>().currentUserId;
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final filePath = 'applications/$userId/$fileName';
+        
+        // Upload to Supabase Storage
+        await supabase.storage.from('documents').upload(
+          filePath,
+          _selectedDocument!,
+        );
+        
+        // Get public URL
+        final imageUrl = supabase.storage.from('documents').getPublicUrl(filePath);
+        
+        setState(() {
+          _uploadedDocumentUrl = imageUrl;
+          _isUploading = false;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Document uploaded successfully!')),
+          );
+        }
+      } catch (e) {
+        setState(() => _isUploading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Upload failed: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
     }
   }
 

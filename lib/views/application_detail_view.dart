@@ -5,13 +5,13 @@
   - k.Malikoe (224004891)
   - T.Maqala (219004340)
   - R.Molelekwa (222015201)
-  - Name Surname (Student Number)
   Date: May 2026
   Module: TPG316C
 */
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/application_viewmodel.dart';
 import 'application_form_view.dart';
@@ -60,7 +60,7 @@ class _ApplicationDetailViewState extends State<ApplicationDetailView> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Application deleted successfully')),
       );
-      Navigator.pop(context, true); // Return to home to refresh
+      Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${appVM.errorMessage}')),
@@ -77,7 +77,20 @@ class _ApplicationDetailViewState extends State<ApplicationDetailView> {
           application: widget.application,
         ),
       ),
-    ).then((_) => Navigator.pop(context, true)); // Refresh on return
+    ).then((_) => Navigator.pop(context, true));
+  }
+
+  Future<void> _viewDocument(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open document'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   @override
@@ -87,7 +100,6 @@ class _ApplicationDetailViewState extends State<ApplicationDetailView> {
     final status = widget.application['status'] ?? 'pending';
     final isPending = status == 'pending';
     
-    // Student can edit/delete only if pending
     final canEdit = !isAdmin && isPending;
     final canDelete = !isAdmin && isPending;
 
@@ -121,31 +133,26 @@ class _ApplicationDetailViewState extends State<ApplicationDetailView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status Banner
             _buildStatusBanner(status),
             const SizedBox(height: 24),
             
-            // Student Info (for admin)
             if (isAdmin && widget.application['profiles'] != null)
               _buildSection('Student Information', [
                 _buildInfoRow('Name', widget.application['profiles']['full_name'] ?? 'N/A'),
                 _buildInfoRow('Email', widget.application['profiles']['email'] ?? 'N/A'),
               ]),
             
-            // Academic Information
             _buildSection('Academic Information', [
               _buildInfoRow('Year of Study', 'Year ${widget.application['year_of_study']}'),
             ]),
             
             const SizedBox(height: 16),
             
-            // First Module
             _buildSection('First Module', [
               _buildInfoRow('Level', widget.application['module1_level'] ?? 'N/A'),
               _buildInfoRow('Module Name', widget.application['module1_name'] ?? 'N/A'),
             ]),
             
-            // Second Module (if exists)
             if (widget.application['module2_name'] != null &&
                 widget.application['module2_name'].isNotEmpty)
               _buildSection('Second Module', [
@@ -153,7 +160,6 @@ class _ApplicationDetailViewState extends State<ApplicationDetailView> {
                 _buildInfoRow('Module Name', widget.application['module2_name']),
               ]),
             
-            // Motivation
             _buildSection('Motivation Statement', [
               Container(
                 width: double.infinity,
@@ -170,13 +176,13 @@ class _ApplicationDetailViewState extends State<ApplicationDetailView> {
               ),
             ]),
             
-            // Supporting Document
-            if (widget.application['document_url'] != null)
+            // Supporting Document with working viewer
+            if (widget.application['document_url'] != null &&
+                widget.application['document_url'].toString().isNotEmpty)
               _buildSection('Supporting Document', [
                 InkWell(
-                  onTap: () {
-                    // TODO: Open document viewer
-                  },
+                  onTap: () => _viewDocument(widget.application['document_url']),
+                  borderRadius: BorderRadius.circular(8),
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -199,7 +205,6 @@ class _ApplicationDetailViewState extends State<ApplicationDetailView> {
             
             const SizedBox(height: 16),
             
-            // Submission Date
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -215,11 +220,10 @@ class _ApplicationDetailViewState extends State<ApplicationDetailView> {
               ),
             ),
             
-            const SizedBox(height: 80), // Space for admin buttons
+            const SizedBox(height: 80),
           ],
         ),
       ),
-      // Admin Action Buttons (bottom)
       bottomNavigationBar: isAdmin && isPending
           ? _buildAdminActions()
           : null,
@@ -252,9 +256,9 @@ class _ApplicationDetailViewState extends State<ApplicationDetailView> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
