@@ -15,7 +15,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/application_viewmodel.dart';
-import 'routes/route_manager.dart';
+import 'views/login_view.dart';
+import 'views/home_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,9 +37,14 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -48,8 +54,22 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      initialRoute: RouteManager.login,
-      onGenerateRoute: RouteManager.generateRoute,
+      home: const AuthWrapper(),
     );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final authVM = context.watch<AuthViewModel>();
+    
+    if (authVM.isLoggedIn) {
+      return const HomeView();
+    } else {
+      return const LoginView();
+    }
   }
 }

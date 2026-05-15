@@ -5,10 +5,10 @@
   - k.Malikoe (224004891)
   - T.Maqala (219004340)
   - R.Molelekwa (222015201)
-  - Name Surname (Student Number)
   Date: May 2026
   Module: TPG316C
 */
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
@@ -37,7 +37,7 @@ class _LoginViewState extends State<LoginView> {
     super.dispose();
   }
 
-  void _submit(AuthViewModel vm) {
+  Future<void> _submit(AuthViewModel vm) async {
     if (!_formKey.currentState!.validate()) return;
 
     final email = _emailController.text.trim();
@@ -45,9 +45,17 @@ class _LoginViewState extends State<LoginView> {
     final name = _nameController.text.trim();
 
     if (_isLoginMode) {
-      vm.login(email, password, context);
+      await vm.login(email, password, context);
+      // No navigation needed - AuthWrapper will handle it
     } else {
-      vm.signUp(email, password, name, context);
+      await vm.signUp(email, password, name, context);
+      if (vm.errorMessage == null) {
+        // Switch to login mode after successful signup
+        setState(() {
+          _isLoginMode = true;
+          _passwordController.clear();
+        });
+      }
     }
   }
 

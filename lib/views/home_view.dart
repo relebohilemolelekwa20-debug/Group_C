@@ -13,10 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/application_viewmodel.dart';
-import '../routes/route_manager.dart';
 import 'application_form_view.dart';
 import 'application_detail_view.dart';
-import 'admin_dashboard_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -39,21 +37,25 @@ class _HomeViewState extends State<HomeView> {
     if (authVM.currentUserId != null) {
       await appVM.fetchApplications(
         authVM.currentUserId!,
-        authVM.userRole ?? 'student',
+        authVM.userRole,
       );
     }
   }
 
   void _navigateToSubmitApplication() {
-    RouteManager.pushNamed(context, RouteManager.applicationForm);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ApplicationFormView()),
+    ).then((_) => _loadApplications());
   }
 
   void _navigateToApplicationDetail(Map<String, dynamic> application) {
-    RouteManager.pushNamed(
-      context, 
-      RouteManager.applicationDetail,
-      arguments: application,
-    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ApplicationDetailView(application: application),
+      ),
+    ).then((_) => _loadApplications());
   }
 
   void _logout() async {
@@ -64,29 +66,19 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     final authVM = context.watch<AuthViewModel>();
-    final isAdmin = authVM.userRole == 'admin';
-  
-    
-    // If admin, show Admin Dashboard
-    if (isAdmin) {
-      return const AdminDashboardView();
-    }
-    
-    // Regular student view
     final appVM = context.watch<ApplicationViewModel>();
+    final isAdmin = authVM.userRole == 'admin';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Applications'),
+        title: Text(isAdmin ? 'Admin Dashboard' : 'My Applications'),
         centerTitle: true,
         actions: [
-          // Refresh button
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadApplications,
             tooltip: 'Refresh',
           ),
-          // Logout button
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _logout,
@@ -94,15 +86,17 @@ class _HomeViewState extends State<HomeView> {
           ),
         ],
       ),
-      body: _buildBody(appVM),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToSubmitApplication,
-        child: const Icon(Icons.add),
-      ),
+      body: _buildBody(appVM, isAdmin),
+      floatingActionButton: !isAdmin
+          ? FloatingActionButton(
+              onPressed: _navigateToSubmitApplication,
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 
-  Widget _buildBody(ApplicationViewModel appVM) {
+  Widget _buildBody(ApplicationViewModel appVM, bool isAdmin) {
     if (appVM.isLoading && appVM.applications.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -137,11 +131,12 @@ class _HomeViewState extends State<HomeView> {
               style: TextStyle(fontSize: 18, color: Colors.grey),
             ),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _navigateToSubmitApplication,
-              icon: const Icon(Icons.add),
-              label: const Text('Submit Application'),
-            ),
+            if (!isAdmin)
+              ElevatedButton.icon(
+                onPressed: _navigateToSubmitApplication,
+                icon: const Icon(Icons.add),
+                label: const Text('Submit Application'),
+              ),
           ],
         ),
       );
@@ -154,13 +149,13 @@ class _HomeViewState extends State<HomeView> {
         itemCount: appVM.applications.length,
         itemBuilder: (context, index) {
           final application = appVM.applications[index];
-          return _buildApplicationCard(application);
+          return _buildApplicationCard(application, isAdmin);
         },
       ),
     );
   }
 
-  Widget _buildApplicationCard(Map<String, dynamic> application) {
+  Widget _buildApplicationCard(Map<String, dynamic> application, bool isAdmin) {
     final status = application['status'] ?? 'pending';
     Color statusColor;
     IconData statusIcon;
@@ -193,10 +188,8 @@ class _HomeViewState extends State<HomeView> {
             children: [
               Row(
                 children: [
-                  // Status icon
                   Icon(statusIcon, color: statusColor, size: 20),
                   const SizedBox(width: 8),
-                  // Module 1 name
                   Expanded(
                     child: Text(
                       application['module1_name'] ?? 'No Module',
@@ -206,66 +199,45 @@ class _HomeViewState extends State<HomeView> {
                       ),
                     ),
                   ),
-                  // Status badge
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       status.toUpperCase(),
-                      style: TextStyle(
-                        color: statusColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              // Module 2 (if exists)
-              if (application['module2_name'] != null &&
-                  application['module2_name'].isNotEmpty)
+              if (application['module2_name'] != null && application['module2_name'].isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Row(
                     children: [
                       const Icon(Icons.book, size: 16, color: Colors.grey),
                       const SizedBox(width: 8),
-                      Text(
-                        application['module2_name'],
-                        style: const TextStyle(color: Colors.grey),
-                      ),
+                      Text(application['module2_name'], style: const TextStyle(color: Colors.grey)),
                     ],
                   ),
                 ),
               const SizedBox(height: 8),
-              // Year of study
               Row(
                 children: [
                   const Icon(Icons.school, size: 16, color: Colors.grey),
                   const SizedBox(width: 8),
-                  Text(
-                    'Year ${application['year_of_study'] ?? 'N/A'}',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
+                  Text('Year ${application['year_of_study'] ?? 'N/A'}', style: const TextStyle(color: Colors.grey)),
                 ],
               ),
               const SizedBox(height: 8),
-              // Date submitted
               Row(
                 children: [
                   const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
                   const SizedBox(width: 8),
-                  Text(
-                    _formatDate(application['created_at']),
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
+                  Text(_formatDate(application['created_at']), style: const TextStyle(color: Colors.grey, fontSize: 12)),
                 ],
               ),
             ],

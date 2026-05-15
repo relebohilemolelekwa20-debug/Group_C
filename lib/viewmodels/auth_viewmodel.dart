@@ -17,11 +17,11 @@ class AuthViewModel extends ChangeNotifier {
   
   bool _isLoading = false;
   String? _errorMessage;
-  String _userRole = 'student'; // Default value, never null
+  String _userRole = 'student';
   
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  String get userRole => _userRole; // Returns String, never null
+  String get userRole => _userRole;
   
   bool get isLoggedIn => _supabase.auth.currentSession != null;
   String? get currentUserId => _supabase.auth.currentUser?.id;
@@ -31,11 +31,9 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> initUser() async {
     if (!isLoggedIn) {
       _userRole = 'student';
-      //notifyListeners();
       return;
     }
     await fetchUserRole();
-    //notifyListeners();
   }
   
   // Fetch user role from profiles table
@@ -82,12 +80,24 @@ class AuthViewModel extends ChangeNotifier {
         _errorMessage = null;
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Account created! Please login.')),
+            const SnackBar(content: Text('Account created! Please login.'), backgroundColor: Colors.green),
+          );
+        }
+      } else {
+        _errorMessage = 'Sign up failed. Please try again.';
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(_errorMessage!), backgroundColor: Colors.red),
           );
         }
       }
     } catch (e) {
       _errorMessage = e.toString();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -109,9 +119,26 @@ class AuthViewModel extends ChangeNotifier {
       if (response.user != null) {
         await fetchUserRole();
         _errorMessage = null;
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Login successful!'), backgroundColor: Colors.green),
+          );
+        }
+      } else {
+        _errorMessage = 'Login failed. Please check your credentials.';
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(_errorMessage!), backgroundColor: Colors.red),
+          );
+        }
       }
     } catch (e) {
       _errorMessage = e.toString();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
