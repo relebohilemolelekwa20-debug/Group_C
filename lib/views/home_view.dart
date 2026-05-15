@@ -5,7 +5,6 @@
   - k.Malikoe (224004891)
   - T.Maqala (219004340)
   - R.Molelekwa (222015201)
-  - Name Surname (Student Number)
   Date: May 2026
   Module: TPG316C
 */
@@ -15,6 +14,9 @@ import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/application_viewmodel.dart';
 import '../routes/route_manager.dart';
+import 'application_form_view.dart';
+import 'application_detail_view.dart';
+import 'admin_dashboard_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -42,12 +44,10 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 
-  // UPDATED: Using RouteManager for navigation
   void _navigateToSubmitApplication() {
     RouteManager.pushNamed(context, RouteManager.applicationForm);
   }
 
-  // UPDATED: Using RouteManager with arguments
   void _navigateToApplicationDetail(Map<String, dynamic> application) {
     RouteManager.pushNamed(
       context, 
@@ -59,18 +59,24 @@ class _HomeViewState extends State<HomeView> {
   void _logout() async {
     final authVM = context.read<AuthViewModel>();
     await authVM.logout();
-    // Navigation will be handled by AppRouter
   }
 
   @override
   Widget build(BuildContext context) {
     final authVM = context.watch<AuthViewModel>();
-    final appVM = context.watch<ApplicationViewModel>();
     final isAdmin = authVM.userRole == 'admin';
+    
+    // If admin, show Admin Dashboard
+    if (isAdmin) {
+      return const AdminDashboardView();
+    }
+    
+    // Regular student view
+    final appVM = context.watch<ApplicationViewModel>();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isAdmin ? 'Admin Dashboard' : 'My Applications'),
+        title: const Text('My Applications'),
         centerTitle: true,
         actions: [
           // Refresh button
@@ -87,17 +93,15 @@ class _HomeViewState extends State<HomeView> {
           ),
         ],
       ),
-      body: _buildBody(appVM, isAdmin),
-      floatingActionButton: !isAdmin
-          ? FloatingActionButton(
-              onPressed: _navigateToSubmitApplication,
-              child: const Icon(Icons.add),
-            )
-          : null,
+      body: _buildBody(appVM),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _navigateToSubmitApplication,
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
-  Widget _buildBody(ApplicationViewModel appVM, bool isAdmin) {
+  Widget _buildBody(ApplicationViewModel appVM) {
     if (appVM.isLoading && appVM.applications.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -132,31 +136,30 @@ class _HomeViewState extends State<HomeView> {
               style: TextStyle(fontSize: 18, color: Colors.grey),
             ),
             const SizedBox(height: 16),
-            if (!isAdmin)
-              ElevatedButton.icon(
-                onPressed: _navigateToSubmitApplication,
-                icon: const Icon(Icons.add),
-                label: const Text('Submit Application'),
-              ),
+            ElevatedButton.icon(
+              onPressed: _navigateToSubmitApplication,
+              icon: const Icon(Icons.add),
+              label: const Text('Submit Application'),
+            ),
           ],
         ),
       );
     }
 
     return RefreshIndicator(
-      onRefresh: () => _loadApplications(),
+      onRefresh: _loadApplications,
       child: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: appVM.applications.length,
         itemBuilder: (context, index) {
           final application = appVM.applications[index];
-          return _buildApplicationCard(application, isAdmin);
+          return _buildApplicationCard(application);
         },
       ),
     );
   }
 
-  Widget _buildApplicationCard(Map<String, dynamic> application, bool isAdmin) {
+  Widget _buildApplicationCard(Map<String, dynamic> application) {
     final status = application['status'] ?? 'pending';
     Color statusColor;
     IconData statusIcon;
@@ -252,19 +255,6 @@ class _HomeViewState extends State<HomeView> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              // Student name (for admin view)
-              if (isAdmin && application['profiles'] != null)
-                Row(
-                  children: [
-                    const Icon(Icons.person, size: 16, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    Text(
-                      application['profiles']['full_name'] ?? 'Unknown',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
               const SizedBox(height: 8),
               // Date submitted
               Row(
