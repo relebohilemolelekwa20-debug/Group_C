@@ -1,11 +1,21 @@
+/*
+  GROUP_C - Student Assistant Application
+  Members:
+  - S.Rululu (222057369)
+  - k.Malikoe (224004891)
+  - T.Maqala (219004340)
+  - R.Molelekwa (222015201)
+  Date: May 2026
+  Module: TPG316C
+*/
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/application_viewmodel.dart';
-import 'views/login_view.dart';
-import 'views/home_view.dart';
+import 'routes/route_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,13 +49,14 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    _init();
+  }
 
-    Future.microtask(() async {
-      final auth = context.read<AuthViewModel>();
-      await auth.initUser();
-      setState(() {
-        _initialized = true;
-      });
+  Future<void> _init() async {
+    final auth = context.read<AuthViewModel>();
+    await auth.initUser();
+    setState(() {
+      _initialized = true;
     });
   }
 
@@ -63,25 +74,11 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       title: 'Student Assistant',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const AppRouter(),
+      initialRoute: RouteManager.login,
+      onGenerateRoute: RouteManager.generateRoute,
     );
-  }
-}
-
-class AppRouter extends StatelessWidget {
-  const AppRouter({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthViewModel>();
-
-    if (!auth.isLoggedIn) {
-      return const LoginView();
-    }
-
-    return const HomeView();
   }
 }
