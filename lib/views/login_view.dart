@@ -1,3 +1,14 @@
+/*
+  GROUP_C - Student Assistant Application
+  Members:
+  - S.Rululu (222057369)
+  - k.Malikoe (224004891)
+  - T.Maqala (219004340)
+  - R.Molelekwa (222015201)
+  - Name Surname (Student Number)
+  Date: May 2026
+  Module: TPG316C
+*/
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
