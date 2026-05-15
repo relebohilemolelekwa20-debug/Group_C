@@ -1,11 +1,11 @@
 /*
   GROUP_C - Student Assistant Application
   Members:
-  - Relebohile Molelekwa (Student Number)
-  - [Your Name] (Your Student Number)
-  - [Other Member Name] (Student Number)
-  - [Other Member Name] (Student Number)
-  - [Other Member Name] (Student Number)
+  - S.Rululu (222057369)
+  - k.Malikoe (224004891)
+  - T.Maqala (219004340)
+  - R.Molelekwa (222015201)
+  - Name Surname (Student Number)
   Date: May 2026
   Module: TPG316C
 */
@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/application_viewmodel.dart';
+import 'application_form_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -296,29 +297,4 @@ class _HomeViewState extends State<HomeView> {
   }
 }
 
-// Placeholder for ApplicationFormView (to be created next)
-class ApplicationFormView extends StatelessWidget {
-  const ApplicationFormView({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Submit Application')),
-      body: const Center(child: Text('Application Form - Coming Soon')),
-    );
-  }
-}
-
-// Placeholder for ApplicationDetailView (to be created next)
-class ApplicationDetailView extends StatelessWidget {
-  final Map<String, dynamic> application;
-  const ApplicationDetailView({super.key, required this.application});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Application Details')),
-      body: const Center(child: Text('Details View - Coming Soon')),
-    );
-  }
-}
